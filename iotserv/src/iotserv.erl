@@ -4,29 +4,39 @@
 -export([init/1, terminate/2, handle_call/3, handle_cast/2]).
 
 -behavior(gen_server).
+-include("iotserv.hrl").
 
+-type devise() :: #devise{}.
 
+-spec start_link() -> {ok, pid()} | {error, term()}.
 start_link() ->
     FileName = get_config(),
     start_link(FileName).
+-spec start_link(string()) -> {ok, pid()} | {error, term()}.
 start_link(FileName) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, FileName, []).
 
+-spec stop() -> ok.
 stop() ->
     gen_server:cast(?MODULE, stop).
 
+-spec add(devise()) -> ok.
 add(Devise) ->
     gen_server:call(?MODULE, {add, Devise}).
 
+-spec delete(integer()) -> ok.
 delete(Id) ->
     gen_server:call(?MODULE, {delete, Id}).
 
+-spec change(integer(), devise()) -> ok.
 change(Id, Devise) ->
     gen_server:call(?MODULE, {change, Id, Devise}).
 
+-spec lookup(integer()) -> {ok, devise()} | {err, instance}.
 lookup(Id) ->
     gen_server:call(?MODULE, {lookup, Id}).
 
+-spec init(string()) -> {ok, term()}.
 init(FileName) ->
     iotserv_db:create_tables(FileName),
     iotserv_db:restore_backup(),
@@ -54,6 +64,7 @@ terminate(_Reason, _State) ->
     iotserv_db:close_tables(),
     ok.
 
+-spec get_config() -> string().
 get_config() ->
     {ok, File} = application:get_env(iotserv, dets_name),
     {ok, Bin} = file:read_file(File),
